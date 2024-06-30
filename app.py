@@ -1,44 +1,44 @@
 import streamlit as st
-import pandas as pd
 
-# Cargar el archivo de Excel
-file_path = 'Presupuesto Corte Laser OK.xlsx'
-data = pd.read_excel(file_path, sheet_name=None)
+# Definición de la función para calcular el presupuesto
+def calcular_presupuesto(material, ancho, alto, tiempo, margen_ganancia):
+    # Actualiza estos valores con los datos corregidos del nuevo archivo Excel
+    costos_materiales = {
+        'MDF 3 mm': 0.384615,  # Actualiza estos valores según el nuevo archivo
+        'MDF 5,5 mm': 0.534188,  # Actualiza estos valores según el nuevo archivo
+        'MDF 9 mm': 0.747863,  # Actualiza estos valores según el nuevo archivo
+        'MDF Blanco': 0.641026,  # Actualiza estos valores según el nuevo archivo
+        'Acrilico': 8.547009  # Actualiza estos valores según el nuevo archivo
+    }
+    costo_minuto = 722.916667  # Actualiza este valor según el nuevo archivo
+    costo_material = costos_materiales.get(material, 0) * (ancho * alto) / 10000
+    costo_operacion = tiempo * costo_minuto
+    costo_total = costo_material + costo_operacion
+    precio_venta = costo_total * (1 + margen_ganancia)
+    return {
+        'Costo del Material': costo_material,
+        'Costo de Operación': costo_operacion,
+        'Costo Total': costo_total,
+        'Precio de Venta': precio_venta
+    }
 
-# Asumimos que la hoja principal es la primera
-main_sheet_name = list(data.keys())[0]
-df = data[main_sheet_name]
+st.title('App de Presupuesto para Corte y Grabado Láser')
 
-# Título de la app
-st.title('Presupuesto para Corte y Grabado Láser')
+# Selección del material
+material = st.selectbox('Selecciona el material', ['MDF 3 mm', 'MDF 5,5 mm', 'MDF 9 mm', 'MDF Blanco', 'Acrilico'])
 
-# Seleccionar el tipo de trabajo
-tipo_trabajo = st.selectbox('Selecciona el tipo de trabajo', df['Tipo de Trabajo'].unique())
+# Entrada de dimensiones y tiempo
+ancho = st.number_input('Ancho (cm)', min_value=0.0, step=0.1)
+alto = st.number_input('Alto (cm)', min_value=0.0, step=0.1)
+tiempo = st.number_input('Tiempo (min)', min_value=0, step=1)
 
-# Filtrar los datos según la selección
-filtered_df = df[df['Tipo de Trabajo'] == tipo_trabajo]
+# Selección del margen de ganancia
+margen_ganancia = st.selectbox('Margen de Ganancia', [0.3, 0.5, 1.0])
 
-# Mostrar los datos filtrados
-st.write(filtered_df)
-
-# Calcular el presupuesto (ejemplo básico)
-if not filtered_df.empty:
-    st.subheader('Presupuesto Estimado')
-    costo_total = filtered_df['Costo'].sum()
-    st.write(f'El costo total estimado es: ${costo_total:.2f}')
-
-# Guardar el archivo como Excel
-@st.cache
-def convert_df(df):
-    return df.to_csv().encode('utf-8')
-
-csv = convert_df(filtered_df)
-
-st.download_button(
-    label="Descargar Presupuesto como CSV",
-    data=csv,
-    file_name='presupuesto.csv',
-    mime='text/csv',
-)
-
-# Ejecutar la app con: streamlit run app.py
+# Botón para calcular el presupuesto
+if st.button('Calcular Presupuesto'):
+    resultado = calcular_presupuesto(material, ancho, alto, tiempo, margen_ganancia)
+    st.write('**Costo del Material:**', round(resultado['Costo del Material'], 2))
+    st.write('**Costo de Operación:**', round(resultado['Costo de Operación'], 2))
+    st.write('**Costo Total:**', round(resultado['Costo Total'], 2))
+    st.write('**Precio de Venta:**', round(resultado['Precio de Venta'], 2))
